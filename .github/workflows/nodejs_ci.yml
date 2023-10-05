@@ -1,43 +1,35 @@
-name: Node.js CI
-
+name: Integration Test
 on:
   pull_request:
     branches:
       - main
-
 jobs:
-  tests:
+  integration-test:
     runs-on: ubuntu-latest
-    env:
-      DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-      MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
-      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-      DB_HOST: ${{ secrets.DB_HOST }}
-    strategy:
-      matrix:
-        node-version:
-          - 16.x
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: 'Anwesh@root1'
+          MYSQL_DATABASE: 'webapp'
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v2
-
-      - name: Install Node.js
-        uses: actions/setup-node@v2
+      - name: Run Node.js project
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Start MySQL
+          node-version: 20
+      - name: Wait for MySQL to be ready
         run: |
-          sudo systemctl start mysql
-          systemctl status mysql
-
-      - name: Create Database
-        run: |
-          sudo mysql --user=${{ secrets.MYSQL_USERNAME }} --password=${{ secrets.MYSQL_PASSWORD }} -e "create database ${{ secrets.DATABASE_NAME }}"
-
-      - name: Install Dependencies
+          until nc -z -v -w30 localhost 3306
+          do
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+          done
+      - name: Install project dependencies
         run: npm install
-
-      - name: Run Tests
+      - name: Run Integration tests 
         run: npm test
