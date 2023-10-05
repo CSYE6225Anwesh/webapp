@@ -78,6 +78,8 @@ app.all("/healthz", healthController.healthCheck);
 })();
 
 
-
+module.exports = {
+  app
+};
 
 
