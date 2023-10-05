@@ -1,4 +1,4 @@
-const { sequelize, createDatabase } = require('../db/db');
+const db = require('../db/db');
 const bodyParser = require("body-parser");
 const fs = require('fs');
 
@@ -14,7 +14,7 @@ const healthCheck = async (req, res) => {
         res.status(400).send();
     } else {
       try {
-        await sequelize.authenticate();
+        await db.sequelize.authenticate();
         console.log("Connected to MySQL database!");
         res.status(200).header('Cache-Control', 'no-cache').send();
       } catch (error) {

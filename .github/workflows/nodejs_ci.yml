@@ -1,0 +1,35 @@
+name: Integration Test
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: 'Anwesh@root1'
+          MYSQL_DATABASE: 'webapp'
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Run Node.js project
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Wait for MySQL to be ready
+        run: |
+          until nc -z -v -w30 localhost 3306
+          do
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+          done
+      - name: Install project dependencies
+        run: npm install
+      - name: Run Integration tests 
+        run: npm test
