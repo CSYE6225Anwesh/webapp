@@ -31,5 +31,3 @@ test
 
 ## Application Testing
 run `npm test` : this runs test on integration-test.js
-
-
