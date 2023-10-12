@@ -173,11 +173,13 @@ const getAssignmentDetails = async (req, res) => {
   const email = credentials.name;
   const providedPassword = credentials.pass;
 
+
   // Check if there are query parameters or request body
   if (Object.keys(req.query).length > 0 || (req.body && Object.keys(req.body).length > 0)) {
     res.status(400).send();  // Bad Request if either query parameters or request body present
     return;
   }
+
 
   try {
     const authResult = await authenticateUser(email, providedPassword);
@@ -227,10 +229,12 @@ const deleteAssignment = async (req, res) => {
   const email = credentials.name;
   const providedPassword = credentials.pass;
 
+
   if (Object.keys(req.query).length > 0 || (req.body && Object.keys(req.body).length > 0)) {
     res.status(400).send();  // Bad Request if either query parameters or request body present
     return;
   }
+
 
   try {
     const authResult = await authenticateUser(email, providedPassword);
@@ -273,11 +277,13 @@ const getAllAssignments = async (req, res) => {
   const email = credentials.name;
   const providedPassword = credentials.pass;
 
+
   // Check if there are query parameters or request body
   if (Object.keys(req.query).length > 0 || (req.body && Object.keys(req.body).length > 0)) {
     res.status(400).send();  // Bad Request if either query parameters or request body present
     return;
   }
+
 
   try {
     const authResult = await authenticateUser(email, providedPassword);
