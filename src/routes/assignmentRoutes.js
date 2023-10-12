@@ -10,5 +10,11 @@ router.get('/assignments/:id', assignmentController.getAssignmentDetails);
 router.delete('/assignments/:id', assignmentController.deleteAssignment);
 router.get('/assignments', assignmentController.getAllAssignments);
 
+router.patch('/assignments/:id', (req, res) => {
+    // Return 405 Method Not Allowed
+    res.status(405).send('Method Not Allowed');
+});
+  
+
 
 module.exports = () => router;  // Export as a function

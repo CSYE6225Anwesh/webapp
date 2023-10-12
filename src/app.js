@@ -6,6 +6,8 @@ const bodyParser = require("body-parser");
 const fs = require('fs');
 const csvParser = require('csv-parser');
 const bcrypt = require('bcrypt');
+const path = require("path");
+const filePath = path.join(__dirname, "../src/opt/users.csv");
 const assignmentRoutes = require('./routes/assignmentRoutes')();
 const healthController = require('./controllers/health');
 
@@ -22,7 +24,7 @@ const loadUsersFromCSV = async () => {
 
   // Read the CSV file and process the data
   return new Promise((resolve, reject) => {
-    fs.createReadStream("/Users/anweshpeddineni/Documents/Cloud/Assignment_3/src/opt/users.csv")
+    fs.createReadStream(filePath)
       .pipe(csvParser())
       .on('data', (row) => {
         users.push(row);
