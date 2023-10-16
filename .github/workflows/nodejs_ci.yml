@@ -10,7 +10,7 @@ jobs:
       mysql:
         image: mysql:latest
         env:
-          MYSQL_ROOT_PASSWORD: 'Anwesh@root1'
+          MYSQL_ROOT_PASSWORD: 'password'
           MYSQL_DATABASE: 'webapp'
         ports:
           - 3306:3306
