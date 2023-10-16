@@ -10,7 +10,7 @@ jobs:
       mysql:
         image: mysql:latest
         env:
-          MYSQL_ROOT_PASSWORD: 'Anwesh@root1'
+          MYSQL_ROOT_PASSWORD: 'password'
           MYSQL_DATABASE: 'webapp'
         ports:
           - 3306:3306
@@ -29,6 +29,8 @@ jobs:
             echo "Waiting for MySQL to be ready..."
             sleep 5
           done
+      - name: Set up .env
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
       - name: Install project dependencies
         run: npm install
       - name: Run Integration tests 

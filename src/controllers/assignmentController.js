@@ -265,7 +265,7 @@ const deleteAssignment = async (req, res) => {
 };
 
 
-// Get List of All Assignments for the Authenticated User
+// Get List of All Assignments of all users for the Authenticated User
 const getAllAssignments = async (req, res) => {
   const credentials = basicAuth(req);
 
@@ -294,12 +294,7 @@ const getAllAssignments = async (req, res) => {
     }
 
     // Find all assignments for the authenticated user
-    const assignments = await Assignment.findAll({ where: { user_id: authResult.user.id } });
-
-    // if (assignments.length === 0) {
-    //   // If there are no assignments for the user, send a 403 Forbidden response
-    //   return res.status(403).json({ error: "Forbidden" });
-    // }
+    const assignments = await Assignment.findAll();
 
     // Return assignment details
     const assignmentDetails = assignments.map(assignment => ({
