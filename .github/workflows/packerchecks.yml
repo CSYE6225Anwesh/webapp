@@ -1,0 +1,33 @@
+name: Packer Validation
+on:
+  pull_request:
+    paths:
+      - "aws-ubuntu.pkr.hcl"
+    types:
+      - opened
+      - synchronize
+jobs:
+  packer_validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Packer
+        run: |
+          wget https://releases.hashicorp.com/packer/1.8.5/packer_1.8.5_linux_amd64.zip
+          unzip packer_1.8.5_linux_amd64.zip
+          sudo mv packer /usr/local/bin/packer
+          packer --version
+        shell: bash
+
+      - name: Install packer plugins
+        run: packer plugins install github.com/hashicorp/amazon
+
+      - name: Format and validate Packer Template
+        run: |
+          set -e
+          packer fmt -check aws-ubuntu.pkr.hcl
+          packer validate aws-ubuntu.pkr.hcl
+          echo "Packer formatting and validation check passed for aws-ubuntu.pkr.hcl"
