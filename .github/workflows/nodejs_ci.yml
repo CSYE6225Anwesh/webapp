@@ -1,6 +1,6 @@
 name: Integration Test
 on:
-  pull_request:
+  push:
     branches:
       - main
 jobs:
@@ -10,8 +10,8 @@ jobs:
       mysql:
         image: mysql:latest
         env:
-          MYSQL_ROOT_PASSWORD: 'password'
-          MYSQL_DATABASE: 'webapp'
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -29,9 +29,36 @@ jobs:
             echo "Waiting for MySQL to be ready..."
             sleep 5
           done
-      - name: Set up .env
-        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
       - name: Install project dependencies
         run: npm install
-      - name: Run Integration tests 
+      - name: Set up .env
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+      - name: Run Integration tests
         run: npm test
+      - name: Build Artifats
+        run: npm run build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: my-repo
+          path: |
+            dist/main.js
+            .env
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY_ID }}
+          aws-region: us-east-1
+          aws-profile: github_user
+      - name: Install Packer
+        run: |
+          wget https://releases.hashicorp.com/packer/1.8.5/packer_1.8.5_linux_amd64.zip
+          unzip packer_1.8.5_linux_amd64.zip
+          sudo mv packer /usr/local/bin/packer
+          packer --version
+        shell: bash
+      - name: Init Packer
+        run: packer init ./aws-ubuntu.pkr.hcl
+      - name: Build Packer
+        run: packer build ./aws-ubuntu.pkr.hcl
