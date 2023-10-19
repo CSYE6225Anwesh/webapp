@@ -103,7 +103,7 @@ build {
       "sudo apt install -y nodejs npm",
       "node -v",
       "npm -v",
-      "mkdir -p webapp/build"
+      "mkdir -p webapp/dist"
     ]
   }
 
