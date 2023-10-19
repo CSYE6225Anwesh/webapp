@@ -59,6 +59,6 @@ jobs:
           packer --version
         shell: bash
       - name: Init Packer
-        run: packer init ./aws-ubuntu.pkr.hcl
+        run: packer init .
       - name: Build Packer
-        run: packer build ./aws-ubuntu.pkr.hcl
+        run: packer build .

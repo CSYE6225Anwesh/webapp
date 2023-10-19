@@ -96,16 +96,14 @@ build {
       "sudo systemctl start mariadb",
       "sudo systemctl enable mariadb",
       "sudo mysql -u root <<EOF",
-      "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Mysql@7566';",
+      "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Anwesh@root1';",
       "FLUSH PRIVILEGES;",
       "EOF",
       "sudo apt update",
       "sudo apt install -y nodejs npm",
       "node -v",
       "npm -v",
-
       "mkdir -p ~/webapp/dist"
-
     ]
   }
 
