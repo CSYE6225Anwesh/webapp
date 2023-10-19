@@ -1,11 +1,8 @@
 name: Packer Validation
 on:
   pull_request:
-    paths:
-      - "aws-ubuntu.pkr.hcl"
-    types:
-      - opened
-      - synchronize
+    branches:
+      - main
 jobs:
   packer_validation:
     runs-on: ubuntu-latest
@@ -28,6 +25,6 @@ jobs:
       - name: Format and validate Packer Template
         run: |
           set -e
-          packer fmt -check aws-ubuntu.pkr.hcl
-          packer validate aws-ubuntu.pkr.hcl
+          packer fmt -check .
+          packer validate .
           echo "Packer formatting and validation check passed for aws-ubuntu.pkr.hcl"

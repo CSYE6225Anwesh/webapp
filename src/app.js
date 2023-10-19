@@ -8,7 +8,7 @@ const csvParser = require('csv-parser');
 const bcrypt = require('bcrypt');
 
 const path = require("path");
-const filePath = path.join(__dirname, "../src/opt/users.csv");
+const filePath = "/opt/users.csv";
 
 const assignmentRoutes = require('./routes/assignmentRoutes')();
 const healthController = require('./controllers/health');
