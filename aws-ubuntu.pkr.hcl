@@ -1,3 +1,4 @@
+
 packer {
   required_plugins {
     amazon = {
@@ -56,6 +57,7 @@ source "amazon-ebs" "custom-ami" {
   access_key = var.aws_access_key
   secret_key = var.aws_secret_key
   region     = "${var.aws_region}"
+  ami_users  = ["725210543027", "568681947239"]
 
   ami_name        = "csye6225_f23_${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
   instance_type   = "${var.instance_type}"
@@ -79,26 +81,59 @@ source "amazon-ebs" "custom-ami" {
 }
 
 
-
 build {
   sources = [
     "source.amazon-ebs.custom-ami"
   ]
 
+
+
+
   provisioner "shell" {
-
     inline = [
-
       "sudo apt update",
       "sudo apt install -y mariadb-server",
       "sudo systemctl start mariadb",
       "sudo systemctl enable mariadb",
       "sudo mysql -u root <<EOF",
-      "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';",
+      "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Mysql@7566';",
       "FLUSH PRIVILEGES;",
       "EOF",
       "sudo apt update",
       "sudo apt install -y nodejs npm",
+      "node -v",
+      "npm -v",
+      "mkdir -p webapp/build"
+    ]
+  }
+
+
+
+  provisioner "file" {
+    source      = fileexists(".env") ? ".env" : "/"
+    destination = "/home/admin/webapp/.env"
+  }
+
+  provisioner "file" {
+    source      = fileexists("dist/main.js") ? "dist/main.js" : "/"
+    destination = "/home/admin/webapp/dist/main.js"
+  }
+
+  provisioner "file" {
+    source      = "package.json"
+    destination = "/home/admin/webapp/package.json"
+  }
+
+  provisioner "file" {
+    source      = "users.csv"
+    destination = "/home/admin/webapp/users.csv"
+  }
+
+  provisioner "shell" {
+
+    inline = [
+      "sudo mv ~/webapp/users.csv /opt/",
+      "cd ~/webapp && npm install"
     ]
   }
 
