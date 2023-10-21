@@ -45,7 +45,7 @@ variable "ami_description" {
   default = "AMI for CSYE 6225"
 }
 
-variable "profile" {
+variable "profile {
   type    = string
   default = "dev"
 }
@@ -76,7 +76,7 @@ source "amazon-ebs" "custom-ami" {
     device_name           = "/dev/xvda"
     volume_size           = 8
     volume_type           = "gp2"
-  
+  }
 
 }
 
