@@ -125,7 +125,7 @@ build {
   }
 
   provisioner "file" {
-    source      = "users.csv"
+  source      = "users.csv"
     destination = "/home/admin/webapp/users.csv"
   }
 
