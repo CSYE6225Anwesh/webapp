@@ -76,7 +76,7 @@ source "amazon-ebs" "custom-ami" {
     device_name           = "/dev/xvda"
     volume_size           = 8
     volume_type           = "gp2"
-  }
+  
 
 }
 
@@ -125,7 +125,7 @@ build {
   }
 
   provisioner "file" {
-  source      = "users.csv"
+    source      = "users.csv"
     destination = "/home/admin/webapp/users.csv"
   }
 
