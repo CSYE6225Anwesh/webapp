@@ -250,7 +250,7 @@ const deleteAssignment = async (req, res) => {
     const assignment = await Assignment.findOne({ where: { id: assignmentId, user_id: user.id } });
 
     if (!assignment) {
-      res.status(404).json({ error: 'Assignment not found or you do not have permission to delete it' });
+      res.status(403).json({ error: 'Assignment not found or you do not have permission to delete it' });
       return;
     }
 
