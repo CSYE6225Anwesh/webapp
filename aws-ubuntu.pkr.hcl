@@ -87,32 +87,25 @@ build {
   ]
 
 
-
+  // add a inline shell to copy userdata env file to webapp env
 
   provisioner "shell" {
     inline = [
-      "sudo apt update",
-      "sudo apt install -y mariadb-server",
-      "sudo systemctl start mariadb",
-      "sudo systemctl enable mariadb",
-      "sudo mysql -u root <<EOF",
-      "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Anwesh@root1';",
-      "FLUSH PRIVILEGES;",
-      "EOF",
+
+      "sudo groupadd csyegroup",
+      "sudo useradd -s /bin/false -g csyegroup -d /opt/csyeuser -m csyeuser",
+      "mkdir -p ~/webapp/dist",
       "sudo apt update",
       "sudo apt install -y nodejs npm",
-      "node -v",
-      "npm -v",
-      "mkdir -p ~/webapp/dist"
     ]
   }
 
 
-
-  provisioner "file" {
-    source      = fileexists(".env") ? ".env" : "/"
-    destination = "/home/admin/webapp/.env"
-  }
+  // this needs to be commented
+  // provisioner "file" {
+  //   source      = fileexists(".env") ? ".env" : "/"
+  //   destination = "/home/admin/webapp/.env"
+  // }
 
   provisioner "file" {
     source      = fileexists("dist/main.js") ? "dist/main.js" : "/"
@@ -129,11 +122,25 @@ build {
     destination = "/home/admin/webapp/users.csv"
   }
 
-  provisioner "shell" {
+  provisioner "file" {
+    source      = "csye.service"
+    destination = "/home/admin/webapp/csye.service"
+  }
 
+
+
+  provisioner "shell" {
     inline = [
-      "sudo mv ~/webapp/users.csv /opt/",
-      "cd ~/webapp && npm install"
+
+      "cd /home/admin/webapp && npm install",
+      "sudo mv /home/admin/webapp/csye.service /etc/systemd/system/",
+      "sudo mv /home/admin/webapp/users.csv /opt/",
+      "sudo mv /home/admin/webapp /opt/csyeuser/",
+      "sudo chown -R csyeuser:csyegroup /opt/",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable csye",
+      "sudo systemctl start csye"
+
     ]
   }
 

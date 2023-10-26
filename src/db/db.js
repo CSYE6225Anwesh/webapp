@@ -7,7 +7,13 @@ const AssignmentModel = require('../model/assignment');
 // Create a Sequelize instance
 const sequelize = new Sequelize(config.database, config.username, config.password, {
   host: config.host,
-  dialect: config.dialect
+  dialect: config.dialect,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  }
 });
 
 const User = UserModel(sequelize);
@@ -26,7 +32,8 @@ const createDatabase = async () => {
   const connection = await mysql.createConnection({
     host: host,
     user: username,
-    password: password
+    password: password,
+    database: database
   });
   await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
 };
