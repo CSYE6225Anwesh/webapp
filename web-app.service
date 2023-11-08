@@ -1,6 +1,6 @@
 [Unit]
 Description= Starting the nodejs application
-ConditionPathExist=/opt/csye6225/webapp
+ConditionPathExists=/opt/csye6225/webapp
 After=cloud-final.target
  
 [Service]
