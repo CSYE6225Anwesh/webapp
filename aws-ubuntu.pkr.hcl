@@ -111,7 +111,7 @@ build {
 
 
   provisioner "file" {
-    source      = "dist/main.js"
+    source      = fileexists("dist/main.js") ? "dist/main.js" : "/"
     destination = "/home/admin/webapp/dist/main.js"
   }
 
