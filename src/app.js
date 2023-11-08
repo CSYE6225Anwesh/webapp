@@ -1,5 +1,6 @@
 
 const express = require("express");
+const logger = require('./logger/logger');
 const { sequelize, createDatabase } = require('./db/db');
 const User = require('./model/user')(sequelize);  
 const bodyParser = require("body-parser");
@@ -49,6 +50,9 @@ const loadUsersFromCSV = async () => {
           }
         }
         console.log('User data from CSV loaded successfully.');
+
+        logger.info('User data from CSV loaded successfully.');
+        
         resolve();
       })
       .on('error', (error) => {
@@ -57,6 +61,8 @@ const loadUsersFromCSV = async () => {
       });
   });
 };
+
+
 
 
 app.use('/v1', assignmentRoutes);

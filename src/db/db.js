@@ -32,8 +32,7 @@ const createDatabase = async () => {
   const connection = await mysql.createConnection({
     host: host,
     user: username,
-    password: password,
-    database: database
+    password: password
   });
   await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
 };
