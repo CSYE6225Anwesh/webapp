@@ -29,6 +29,3 @@ jobs:
           packer validate .
           echo "Packer formatting and validation check passed for aws-ubuntu.pkr.hcl"
 
-
-
-          
