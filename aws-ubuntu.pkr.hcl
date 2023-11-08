@@ -91,14 +91,16 @@ build {
 
   provisioner "shell" {
     inline = [
-
-      "sudo groupadd csyegroup",
-      "sudo useradd -s /bin/false -g csyegroup -d /opt/csyeuser -m csyeuser",
+      "sudo groupadd csye6225",
+      "sudo useradd -s /bin/false -g csye6225 -d /opt/csye6225 -m csye6225",
       "mkdir -p ~/webapp/dist",
       "sudo apt update",
       "sudo apt install -y nodejs npm",
+      "sudo wget https://s3.amazonaws.com/amazoncloudwatch-agent/debian/amd64/latest/amazon-cloudwatch-agent.deb -O /tmp/amazon-cloudwatch-agent.deb",
+      "sudo dpkg -i /tmp/amazon-cloudwatch-agent.deb",
     ]
   }
+
 
 
   // this needs to be commented
@@ -106,6 +108,7 @@ build {
   //   source      = fileexists(".env") ? ".env" : "/"
   //   destination = "/home/admin/webapp/.env"
   // }
+
 
   provisioner "file" {
     source      = fileexists("dist/main.js") ? "dist/main.js" : "/"
@@ -123,24 +126,29 @@ build {
   }
 
   provisioner "file" {
-    source      = "csye.service"
-    destination = "/home/admin/webapp/csye.service"
+    source      = "web-app.service"
+    destination = "/home/admin/webapp/web-app.service"
   }
 
+  provisioner "file" {
+    source      = "cloudwatch-config.json"
+    destination = "/home/admin/webapp/cloudwatch-config.json" # Destination path on the AMI
+  }
 
 
   provisioner "shell" {
     inline = [
-
       "cd /home/admin/webapp && npm install",
-      "sudo mv /home/admin/webapp/csye.service /etc/systemd/system/",
+      "sudo mv /home/admin/webapp/web-app.service /etc/systemd/system/",
       "sudo mv /home/admin/webapp/users.csv /opt/",
-      "sudo mv /home/admin/webapp /opt/csyeuser/",
-      "sudo chown -R csyeuser:csyegroup /opt/",
+      "sudo mv /home/admin/webapp /opt/csye6225/",
+      "sudo chown -R csye6225:csye6225 /opt/",
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable csye",
-      "sudo systemctl start csye"
-
+      "sudo systemctl enable web-app",
+      "sudo systemctl start web-app",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable amazon-cloudwatch-agent",
+      "sudo systemctl start amazon-cloudwatch-agent"
     ]
   }
 

@@ -1,0 +1,17 @@
+[Unit]
+Description= Starting the nodejs application
+ConditionPathExist=/opt/csye6225/webapp
+After=cloud-final.target
+ 
+[Service]
+Type=simple
+User=csye6225
+Group=csye6225
+WorkingDirectory=/opt/csye6225/webapp/
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=3
+ 
+[Install]
+WantedBy=cloud-init.target
+

@@ -1,4 +1,7 @@
 const express = require('express');
+const logger = require('../logger/logger');
+const client = require('../logger/statsd');
+
 const { Assignment } = require('../db/db'); // Adjust the path based on your actual structure
 const basicAuth = require('basic-auth');
 const { User } = require('../db/db');
@@ -37,6 +40,7 @@ const createAssignment = async (req, res) => {
   const credentials = basicAuth(req);
 
   if (!credentials) {
+    logger.warn('Create Assignment: Missing credentials in request');
     res.status(401).json({ error: 'Invalid credentials' });
     return;
   }
@@ -45,18 +49,21 @@ const createAssignment = async (req, res) => {
 
   // Check if required fields are missing
   if (!name || !points || !num_of_attempts || !deadline) {
+    logger.warn('Create Assignment: Missing one or more required fields');
     res.status(400).json({ error: 'Bad Request: Missing required fields' });
     return;
   }
 
   // Check if num_of_attempts and points are within the specified range
   if (num_of_attempts < 1 || num_of_attempts > 100 || points < 1 || points > 100) {
+    logger.warn(`Create Assignment: num_of_attempts or points out of valid range. Received num_of_attempts: ${num_of_attempts}, points: ${points}`);
     res.status(400).json({ error: 'Bad Request: Invalid num_of_attempts or points' });
     return;
   }
 
   // Check if assignment_created or assignment_updated are provided by the user
   if (assignment_created || assignment_updated) {
+    logger.warn('Create Assignment: assignment_created or assignment_updated fields provided');
     res.status(403).json({ error: 'Forbidden: Cannot provide assignment_created or assignment_updated' });
     return;
   }
@@ -68,6 +75,7 @@ const createAssignment = async (req, res) => {
     const authResult = await authenticateUser(email, providedPassword);
 
     if (authResult.error) {
+      logger.warn(`Create Assignment: Authentication failed for user ${email}`);
       res.status(401).json({ error: authResult.error });
       return;
     }
@@ -82,10 +90,12 @@ const createAssignment = async (req, res) => {
       deadline,
       user_id: user.id // Linking to the user
     });
-
+    // Log successful assignment creation using StatsD
+    client.increment('assignment.creation.success', 1);
+    logger.info(`Create Assignment: Assignment created successfully for user ${email}`);
     res.status(201).json({ success: true, assignment });
   } catch (error) {
-    console.error('Error creating assignment:', error);
+    logger.error(`Create Assignment: Error creating assignment - ${error}`);
     res.status(500).json({ error: 'Error creating assignment', message: error.message });
   }
 };
@@ -151,6 +161,10 @@ const updateAssignment = async (req, res) => {
       deadline
     });
 
+    // Log successful update using StatsD
+    client.increment('assignment.update.success', 1);
+
+    logger.info(`Update Assignment: Assignment id ${assignmentId} updated successfully by user ${email}`);
     res.status(204).send();
   } catch (error) {
     console.error('Error updating assignment:', error);
@@ -193,9 +207,14 @@ const getAssignmentDetails = async (req, res) => {
     const assignment = await Assignment.findOne({ where: { id: assignmentId, user_id: authResult.user.id } });
 
     if (!assignment) {
-      res.status(403).json({ error: 'Assignment not found or you do not have permission to access it' });
+      res.status(404).json({ error: 'Assignment not found or you do not have permission to access it' });
       return;
     }
+
+    // Successful retrieval
+    client.increment('assignment.details.success', 1);
+    logger.info(`Get Assignment Details: Assignment id ${assignmentId} retrieved successfully for user ${email}`);
+
 
     // Return assignment details
     res.status(200).json({
@@ -208,6 +227,7 @@ const getAssignmentDetails = async (req, res) => {
       assignment_updated: assignment.updatedAt
     });
   } catch (error) {
+    logger.error(`Get Assignment Details: Error fetching details for assignment id ${assignmentId} - ${error}`);
     console.error('Error fetching assignment details:', error);
     res.status(500).json({ error: 'Error fetching assignment details', message: error.message });
   }
@@ -257,8 +277,13 @@ const deleteAssignment = async (req, res) => {
     // Delete the assignment
     await assignment.destroy();
 
+    client.increment('assignment.delete.success', 1);
+    logger.info(`Delete Assignment: Assignment id ${assignmentId} deleted successfully for user ${email}`);
+
+
     res.status(204).send();
   } catch (error) {
+    logger.error(`Delete Assignment: Error deleting assignment id ${assignmentId} - ${error}`);
     console.error('Error deleting assignment:', error);
     res.status(500).json({ error: 'Error deleting assignment', message: error.message });
   }
@@ -307,8 +332,12 @@ const getAllAssignments = async (req, res) => {
       assignment_updated: assignment.updatedAt
     }));
 
+    client.increment('assignments.getall.success', 1);
+    logger.info(`Get All Assignments: Retrieved all assignments for user ${email}`);
+
     res.status(200).json(assignmentDetails);
   } catch (error) {
+    logger.error(`Get All Assignments: Error fetching assignments for user ${email} - ${error}`);
     console.error('Error fetching assignments:', error);
     res.status(500).json({ error: 'Error fetching assignments', message: error.message });
   }
