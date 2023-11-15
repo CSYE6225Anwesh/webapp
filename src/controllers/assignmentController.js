@@ -54,9 +54,9 @@ const createAssignment = async (req, res) => {
     return;
   }
 
-  // Check if num_of_attempts and points are within the specified range
-  if (num_of_attempts < 1 || num_of_attempts > 100 || points < 1 || points > 100) {
-    logger.warn(`Create Assignment: num_of_attempts or points out of valid range. Received num_of_attempts: ${num_of_attempts}, points: ${points}`);
+  // Check if num_of_attempts and points are integers within the specified range
+  if (!Number.isInteger(num_of_attempts) || !Number.isInteger(points) || num_of_attempts < 1 || num_of_attempts > 100 || points < 1 || points > 100) {
+    logger.warn(`Create Assignment: num_of_attempts or points out of valid range or not integers. Received num_of_attempts: ${num_of_attempts}, points: ${points}`);
     res.status(400).json({ error: 'Bad Request: Invalid num_of_attempts or points' });
     return;
   }
@@ -120,8 +120,8 @@ const updateAssignment = async (req, res) => {
     return;
   }
 
-  // Check if num_of_attempts and points are within the specified range
-  if (num_of_attempts < 1 || num_of_attempts > 100 || points < 1 || points > 100) {
+  // Check if num_of_attempts and points are integers within the specified range
+  if (!Number.isInteger(num_of_attempts) || !Number.isInteger(points) || num_of_attempts < 1 || num_of_attempts > 100 || points < 1 || points > 100) {
     res.status(400).json({ error: 'Bad Request: Invalid num_of_attempts or points' });
     return;
   }
@@ -266,14 +266,23 @@ const deleteAssignment = async (req, res) => {
 
     const user = authResult.user;
 
+
+
     // Ensure the assignment exists and is owned by the authenticated user
-    const assignment = await Assignment.findOne({ where: { id: assignmentId, user_id: user.id } });
+    const assignment = await Assignment.findOne({ where: {id: assignmentId} });
 
     if (!assignment) {
-      res.status(403).json({ error: 'Assignment not found or you do not have permission to delete it' });
+      res.status(404).json({ error: 'Assignment not found' });
       return;
     }
 
+    // Check if the authenticated user is the owner of the assignment
+    if (assignment.user_id !== user.id) {
+      res.status(403).json({ error: 'Permission denied' });
+      return;
+    }
+
+    
     // Delete the assignment
     await assignment.destroy();
 
