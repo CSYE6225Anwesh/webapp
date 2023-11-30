@@ -2,10 +2,15 @@ const express = require('express');
 const logger = require('../logger/logger');
 const client = require('../logger/statsd');
 
+require('dotenv').config();
+
 const { Assignment } = require('../db/db'); // Adjust the path based on your actual structure
 const basicAuth = require('basic-auth');
 const { User } = require('../db/db');
+const { AssignmentSubmission } = require('../db/db');
 const bcrypt = require('bcrypt');
+
+const AWS = require("aws-sdk");
 
 const assignmentController = express.Router();
 
@@ -299,6 +304,8 @@ const deleteAssignment = async (req, res) => {
 };
 
 
+
+
 // Get List of All Assignments of all users for the Authenticated User
 const getAllAssignments = async (req, res) => {
   const credentials = basicAuth(req);
@@ -353,10 +360,157 @@ const getAllAssignments = async (req, res) => {
 };
 
 
+// POST endpoint for assignment submission
+const submitAssignment = async (req, res) => {
+  console.log("Submission route handler reached");
+  const credentials = basicAuth(req);
+ 
+  if (!credentials) {
+    res.status(401).json({ error: "Invalid credentials" });
+    return;
+  }
+ 
+  const assignmentId = req.params.id;
+  const { submission_url } = req.body;
+ 
+  const email = credentials.name;
+  const providedPassword = credentials.pass;
+ 
+  try {
+    const authResult = await authenticateUser(email, providedPassword);
+ 
+    if (authResult.error) {
+      res.status(401).json({ error: authResult.error });
+      return;
+    }
+ 
+    const user = authResult.user;
+
+    // Ensure the assignment exists and is owned by the authenticated user
+    const assignment = await Assignment.findOne({ where: {id: assignmentId} });
+
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    // Check if the authenticated user is the owner of the assignment
+    if (assignment.user_id !== user.id) {
+      res.status(403).json({ error: 'Permission denied' });
+      return;
+    }
+
+
+ 
+    // Check if the due date has passed
+    const currentDateTime = new Date();
+    if (currentDateTime > assignment.deadline) {
+      res.status(400).json({ error: "Submission deadline has passed." });
+      return;
+    }
+ 
+    // Implement retries logic
+    const submissions = await AssignmentSubmission.findAll({
+      where: { assignment_id: assignmentId, user_id: user.id },
+    });
+ 
+    if (submissions.length >= assignment.num_of_attempts) {
+      res.status(400).json({ error: "Exceeded maximum number of retries." });
+      return;
+    }
+ 
+    // Create a new submission
+    const submission = await AssignmentSubmission.create({
+      assignment_id: assignmentId,
+      user_id: user.id,
+      submission_url,
+      submission_date: new Date(), // Set submission_date to the current date and time
+      submission_updated: new Date(), // Set submission_updated to the current date and time
+    });
+ 
+    const snsClient = new AWS.SNS({
+      apiVersion: "2010-03-31",
+      region: "us-east-1", // Replace with your AWS region
+      // credentials: new AWS.Credentials({
+      //   accessKeyId: "AKIAYI2AV4BT67IR6F3N",
+      //   secretAccessKey: "ztcKwhFQXpW+iK4hqq+PM8KoXrobB3WNdGYUbvjT",
+      // }),
+    });
+ 
+    // Publish message to SNS topic
+    const snsMessage = {
+      url: submission_url,
+      user: {
+        email: email,
+        // Add other user information if needed
+      },
+    };
+
+    const topicArn = process.env.TOPIC_ARN;
+    
+    // const topicsData = await snsClient.listTopics().promise();
+    // const topicArn = topicsData.Topics.find(topic => topic.TopicArn.includes('mySNSTopic')).TopicArn;
+ 
+    console.log("topic ARn is = ", topicArn); // successful response
+
+    const snsParams = {
+      Message: JSON.stringify(snsMessage),
+      TopicArn: topicArn,
+    };
+ 
+   
+
+    try {
+      const snsResponse = await snsClient.publish(snsParams).promise();
+      console.log("Message published to SNS:", snsResponse.MessageId);
+      // // Optionally, you can subscribe an email address to the SNS topic
+      // const endpoint = email; // Replace with your endpoint
+      // const protocol = 'email'; // Change to 'sms', 'https', etc., as needed
+
+      // snsClient.subscribe(
+      // {
+      //   TopicArn: topicArn, // The ARN of the SNS topic created in step 3
+      //   Protocol: protocol,
+      //   Endpoint: endpoint,
+      // }, (err, data) => {
+      //   if (err) {
+      //     console.error('Error subscribing to topic:', err);
+      //   } else {
+      //     console.log('Subscription ARN:', data.SubscriptionArn);
+      //   }
+      // });
+
+    } catch (error) {
+      console.error("Error publishing message to SNS:", error);
+      // Handle error as needed
+    }
+ 
+    // Log successful submission
+    client.increment("assignment.submission.success", 1);
+    logger.info(
+      `Assignment Submission: Submission for assignment id ${assignmentId} by user ${email} accepted`
+    );
+ 
+    res.status(201).json({ success: true, submission });
+  } catch (error) {
+    logger.error(
+      `Assignment Submission: Error submitting assignment id ${assignmentId} - ${error}`
+    );
+    console.error("Error submitting assignment:", error);
+    res
+      .status(500)
+      .json({ error: "Error submitting assignment", message: error.message });
+  }
+};
+ 
+
+
+
 module.exports = {
   createAssignment,
   updateAssignment,
   getAssignmentDetails,
   deleteAssignment,
-  getAllAssignments
+  getAllAssignments,
+  submitAssignment
 };
