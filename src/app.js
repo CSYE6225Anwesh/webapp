@@ -15,6 +15,8 @@ const assignmentRoutes = require('./routes/assignmentRoutes')();
 const healthController = require('./controllers/health');
 
 
+
+
 const app = express();
 const port = 8080;
 
@@ -89,9 +91,6 @@ app.all("/healthz", healthController.healthCheck);
 })();
 
 
-// module.exports = {
-//   app
-// };
 
 module.exports = app;
 
