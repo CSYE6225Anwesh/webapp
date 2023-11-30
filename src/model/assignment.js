@@ -54,6 +54,7 @@ function model(sequelize) {
 
   Assignment.associate = (models) => {
     Assignment.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
+    Assignment.hasMany(models.AssignmentSubmission, { foreignKey: 'assignment_id' });
   };
 
   return Assignment;
