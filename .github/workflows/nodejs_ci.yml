@@ -68,6 +68,7 @@ jobs:
           export AWS_DEFAULT_REGION="us-east-1"
 
           ami_id=$(cat manifest.json | grep artifact_id | cut -d ":" -f 3 | tr -d '",')
+          # ami_id="ami-08d33ecef1860469d"
           TEMPLATE_NAME="my-launch-template"
           OLD_VERSION=1
 
@@ -82,6 +83,6 @@ jobs:
           new_template_version=$(aws ec2 create-launch-template-version --source-version $OLD_VERSION --launch-template-name $TEMPLATE_NAME --launch-template-data "ImageId=$ami_id" --version-description "v2" --query 'LaunchTemplateVersion.VersionNumber' --output text)
           echo "New Launch Template Version: $new_template_version"
 
-          aws autoscaling update-auto-scaling-group --auto-scaling-group-name $autoscaling_group_name --launch-template LaunchTemplateName="$TEMPLATE_NAME", Version="$new_template_version"
+          aws autoscaling update-auto-scaling-group --auto-scaling-group-name $autoscaling_group_name --launch-template "LaunchTemplateName=$TEMPLATE_NAME,Version=$new_template_version"
 
           instance_refresh_id=$(aws autoscaling start-instance-refresh --auto-scaling-group-name $autoscaling_group_name --strategy "Rolling" --query 'InstanceRefreshId' --output text)
