@@ -33,5 +33,10 @@ change 1
 run `npm test` : this runs test on integration-test.js
 ..
 
+## Importing SSL certificate to AWS ACM
+
+- give the following command to import the SSL certificate into AWS Certificate Manager from your CLI,
+
+- sudo aws acm import-certificate --profile demo --certificate fileb://www_demo_anweshcloud_me.crt --certificate-chain fileb://www_demo_anweshcloud_me.ca-bundle --private-key fileb://~/private.key
 
 
