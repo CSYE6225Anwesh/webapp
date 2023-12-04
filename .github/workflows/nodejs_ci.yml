@@ -61,4 +61,27 @@ jobs:
       - name: Init Packer
         run: packer init .
       - name: Build Packer
-        run: packer build .
+        run: |
+          packer build .
+          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEMO_ACCESS_KEY }}
+          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEMO_SECRET_KEY }}
+          export AWS_DEFAULT_REGION="us-east-1"
+
+          ami_id=$(cat manifest.json | grep artifact_id | cut -d ":" -f 3 | tr -d '",')
+          TEMPLATE_NAME="my-launch-template"
+          OLD_VERSION=1
+
+          autoscaling_group_name="myAutoScalingGroup"
+
+          echo $ami_id
+          echo $TEMPLATE_NAME
+          echo $OLD_VERSION
+
+          aws ec2 describe-launch-template-versions --launch-template-name $TEMPLATE_NAME --versions $OLD_VERSION
+
+          new_template_version=$(aws ec2 create-launch-template-version --source-version $OLD_VERSION --launch-template-name $TEMPLATE_NAME --launch-template-data "ImageId=$ami_id" --version-description "v2" --query 'LaunchTemplateVersion.VersionNumber' --output text)
+          echo "New Launch Template Version: $new_template_version"
+
+          aws autoscaling update-auto-scaling-group --auto-scaling-group-name $autoscaling_group_name --launch-template LaunchTemplateName="$TEMPLATE_NAME", Version="$new_template_version"
+
+          instance_refresh_id=$(aws autoscaling start-instance-refresh --auto-scaling-group-name $autoscaling_group_name --strategy "Rolling" --query 'InstanceRefreshId' --output text)
