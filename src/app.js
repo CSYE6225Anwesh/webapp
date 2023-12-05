@@ -67,7 +67,7 @@ const loadUsersFromCSV = async () => {
 
 
 
-app.use('/v2', assignmentRoutes);
+app.use('/v3', assignmentRoutes);
 
 app.all("/healthz", healthController.healthCheck);
 
